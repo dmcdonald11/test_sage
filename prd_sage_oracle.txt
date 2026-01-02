@@ -1,0 +1,149 @@
+# Sage Oracle Document Processing Agency
+
+---
+
+- **Purpose:** The Sage Oracle Document Processing Agency is a comprehensive document processing and knowledge extraction system designed to handle large-scale document conversion, chunking, embedding, and storage operations. Built on the Agency Swarm framework, it leverages Docling's advanced document understanding capabilities to process various document formats (PDFs, HTML, DOCX, etc.) from multiple sources including URLs, sitemaps, and local folders. The agency serves enterprise knowledge management systems, research institutions, content management platforms, and RAG application developers who need automated document conversion and indexing capabilities.
+
+- **Communication Flows:**
+  - **Between Agents:**
+    - The Sage Oracle Agent serves as the primary document processing specialist, handling the complete document lifecycle from ingestion to storage. It communicates with other agents by providing processed, searchable, and embeddable document content. The agent can receive processing requests from other agents and return structured results including markdown content, extracted images, document chunks, and vector embeddings.
+    - **Example Flow:**
+      - **Research Agent -> Sage Oracle:** Request to process a collection of research papers from a specific folder, with requirements for image annotation and chunking for RAG applications.
+      - **Sage Oracle -> Knowledge Base Agent:** Provide processed document chunks with embeddings for storage in the vector database, along with metadata and processing statistics.
+      - **Sage Oracle -> Monitoring Agent:** Send progress updates, performance metrics, and error reports during batch processing operations.
+  - **Agent to User Communication:** The Sage Oracle Agent communicates with users through the Agency Swarm interface, providing detailed processing results, progress updates, and error notifications. Users can submit processing requests through natural language commands and receive comprehensive reports on document processing operations.
+
+---
+
+## Sage Oracle
+
+### **Role within the Agency**
+
+The Sage Oracle Agent serves as the primary document processing and knowledge extraction specialist within the agency. It handles the complete document lifecycle from ingestion to storage, providing other agents with processed, searchable, and embeddable document content. The agent is responsible for converting various document formats to structured markdown, extracting and annotating images, intelligently segmenting documents for optimal retrieval, creating vector embeddings for semantic search, and storing results in PostgreSQL vector databases.
+
+### Tools
+
+- **ProcessFolderPipeline:**
+  - **Description**: Process all documents in a specified folder with concurrent execution, supporting multiple file formats and providing comprehensive document processing capabilities.
+  - **Inputs**:
+    - `folder_path` (str) - Path to folder containing documents to process
+    - `file_patterns` (List[str]) - File patterns to process (default: ["*.pdf", "*.html", "*.docx"])
+    - `max_concurrent` (int) - Number of concurrent pipelines (default: 10)
+    - `annotate_images` (bool) - Enable AI image annotation (default: True)
+    - `save_images_as_files` (bool) - Save images as external files (default: True)
+  - **Validation**:
+    - Folder path must exist and be accessible
+    - File patterns must be valid glob patterns
+    - Max concurrent must be between 1 and 50
+  - **Core Functions:** Scan folder for matching documents, create concurrent processing pipelines, execute complete document processing workflow, track progress and handle errors
+  - **APIs**: Docling DocumentConverter, OpenAI API (for image annotation)
+  - **Output**: JSON object with processing results, statistics, and file paths
+
+- **ProcessSitemapPipeline:**
+  - **Description**: Process all documents from a website sitemap with full pipeline execution, including URL extraction, concurrent processing, and comprehensive storage.
+  - **Inputs**:
+    - `sitemap_url` (str) - URL of the website sitemap to process
+    - `max_concurrent` (int) - Number of concurrent pipelines (default: 10)
+    - `enable_chunking` (bool) - Enable document chunking (default: True)
+    - `enable_embeddings` (bool) - Enable vector embeddings (default: True)
+    - `annotate_images` (bool) - Enable AI image annotation (default: True)
+  - **Validation**:
+    - Sitemap URL must be accessible and valid
+    - Max concurrent must be between 1 and 20 (web processing limit)
+  - **Core Functions:** Extract URLs from sitemap, create concurrent processing pipelines, execute complete document processing workflow, store results in PostgreSQL and file system
+  - **APIs**: Sitemap parsing, Docling DocumentConverter, PostgreSQL, OpenAI API
+  - **Output**: JSON object with processing results, statistics, and database records
+
+- **ProcessMixedSources:**
+  - **Description**: Process documents from multiple sources (folders, URLs, sitemaps) in a single operation, providing unified processing capabilities for diverse input types.
+  - **Inputs**:
+    - `folder_paths` (List[str]) - List of folder paths to process
+    - `urls` (List[str]) - List of URLs to process
+    - `sitemap_urls` (List[str]) - List of sitemap URLs to process
+    - `max_concurrent` (int) - Number of concurrent pipelines (default: 10)
+    - `output_format` (str) - Output format preference (default: "markdown")
+  - **Validation**:
+    - At least one input source must be provided
+    - All paths and URLs must be valid and accessible
+    - Max concurrent must be between 1 and 50
+  - **Core Functions:** Combine multiple input sources, create unified processing pipeline, execute concurrent processing, aggregate results from all sources
+  - **APIs**: Docling DocumentConverter, PostgreSQL, OpenAI API
+  - **Output**: JSON object with aggregated processing results and statistics
+
+- **ConvertSingleDocument:**
+  - **Description**: Process a single document through the complete pipeline, supporting various input types and providing comprehensive processing capabilities.
+  - **Inputs**:
+    - `input_source` (str) - File path, URL, or base64 content
+    - `input_type` (str) - Type: 'file', 'url', 'base64', or 'auto'
+    - `annotate_images` (bool) - Enable AI image annotation (default: True)
+    - `save_images_as_files` (bool) - Save images as external files (default: True)
+    - `enable_chunking` (bool) - Enable document chunking (default: True)
+    - `enable_embeddings` (bool) - Enable vector embeddings (default: True)
+  - **Validation**:
+    - Input source must be valid and accessible
+    - Input type must be one of the specified options
+  - **Core Functions:** Auto-detect input type if not specified, execute complete document processing pipeline, store results in appropriate systems, return detailed processing results
+  - **APIs**: Docling DocumentConverter, PostgreSQL, OpenAI API
+  - **Output**: JSON object with processing results, file paths, and database records
+
+- **BatchProcessDocuments:**
+  - **Description**: Process multiple documents with advanced batch management, including retry logic, progress tracking, and comprehensive error handling.
+  - **Inputs**:
+    - `input_sources` (List[str]) - List of file paths, URLs, or base64 content
+    - `max_workers` (int) - Number of concurrent threads (default: 4)
+    - `batch_size` (int) - Number of documents per batch (default: 10)
+    - `retry_failed` (bool) - Retry failed documents (default: True)
+    - `progress_callback` (str) - Progress tracking method (default: "console")
+  - **Validation**:
+    - Input sources list must not be empty
+    - Max workers must be between 1 and 20
+    - Batch size must be between 1 and 100
+  - **Core Functions:** Manage concurrent document processing, implement retry logic for failed documents, track progress and provide updates, aggregate results and statistics
+  - **APIs**: Docling DocumentConverter, PostgreSQL, OpenAI API
+  - **Output**: JSON object with batch processing results and detailed statistics
+
+- **MonitorProcessingStatus:**
+  - **Description**: Monitor and report on active document processing operations, providing real-time status updates and performance metrics.
+  - **Inputs**:
+    - `operation_id` (str) - ID of the processing operation to monitor
+    - `include_details` (bool) - Include detailed progress information (default: False)
+    - `refresh_interval` (int) - Refresh interval in seconds (default: 5)
+  - **Validation**:
+    - Operation ID must be valid and exist
+    - Refresh interval must be between 1 and 60 seconds
+  - **Core Functions:** Track active processing operations, monitor progress and performance metrics, identify bottlenecks and issues, generate status reports
+  - **APIs**: Internal monitoring system, PostgreSQL
+  - **Output**: JSON object with current status, progress, and performance metrics
+
+- **ConfigureProcessingPipeline:**
+  - **Description**: Configure and customize the document processing pipeline, allowing dynamic adjustment of processing parameters and settings.
+  - **Inputs**:
+    - `pipeline_config` (dict) - Pipeline configuration parameters
+    - `stage_settings` (dict) - Individual stage configuration
+    - `concurrency_settings` (dict) - Concurrency and resource settings
+    - `output_settings` (dict) - Output format and storage settings
+  - **Validation**:
+    - Configuration must be valid JSON format
+    - All required parameters must be present
+    - Settings must be within acceptable ranges
+  - **Core Functions:** Validate configuration parameters, apply pipeline configuration, update processing settings, test configuration with sample documents
+  - **APIs**: Internal configuration system
+  - **Output**: JSON object with configuration status and validation results
+
+- **ExportProcessingResults:**
+  - **Description**: Export processed document results in various formats, providing flexible output options for different use cases.
+  - **Inputs**:
+    - `operation_id` (str) - ID of the processing operation
+    - `export_format` (str) - Export format: 'json', 'csv', 'markdown', 'html'
+    - `include_embeddings` (bool) - Include vector embeddings (default: False)
+    - `include_images` (bool) - Include image references (default: True)
+    - `output_path` (str) - Path for exported files
+  - **Validation**:
+    - Operation ID must be valid and exist
+    - Export format must be supported
+    - Output path must be writable
+  - **Core Functions:** Retrieve processing results from database, format data according to export format, generate export files, provide download links or file paths
+  - **APIs**: PostgreSQL, File system
+  - **Output**: JSON object with export status and file information
+
+---

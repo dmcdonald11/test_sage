@@ -1,9 +1,22 @@
-# Agency Swarm GitHub Template
+# Document Processing Agency
 
-A production-ready template for deploying [Agency Swarm](https://github.com/VRSEN/agency-swarm) agencies with Docker containerization and automated deployment to the [Agencii](https://agencii.ai/) cloud platform.
+A production-ready Agency Swarm implementation for intelligent web document processing and semantic search. This agency crawls websites, parses multiple document formats using Docling, performs hybrid chunking, generates embeddings, and stores content in PostgreSQL with pgvector for RAG applications.
 
 **🌐 [Agencii](https://agencii.ai/)** - The official cloud platform for Agency Swarm deployments  
 **🔗 [GitHub App](https://github.com/apps/agencii)** - Automated deployment integration
+
+---
+
+## 🎯 Features
+
+- **🌐 Web Crawling**: Intelligent web crawling with automatic document discovery
+- **📄 Multi-Format Parsing**: Support for 12+ document formats (PDF, DOCX, XLSX, PPTX, HTML, Markdown, Images, Audio, CSV, XML, VTT, JSON)
+- **🧩 Hybrid Chunking**: Structure-aware chunking with token limits using Docling
+- **🔢 Vector Embeddings**: Semantic embeddings with sentence-transformers
+- **🎛️ Flexible Model Configuration**: Choose between HuggingFace (free) or OpenAI (paid) models
+- **💾 Vector Storage**: PostgreSQL with pgvector for efficient similarity search
+- **🔍 Semantic Search**: Find content by meaning, not just keywords
+- **🏗️ Production Ready**: Docker containerization and automated deployment
 
 ---
 
@@ -26,27 +39,96 @@ cd agency-github-template
 pip install -r requirements.txt
 ```
 
-### 3. Set Up Environment Variables
+### 3. Set Up PostgreSQL with pgvector
 
-Create a `.env` file in the root directory:
+This agency requires PostgreSQL with the pgvector extension:
 
 ```bash
-# Required
-OPENAI_API_KEY=your_openai_api_key_here
+# Using Docker (recommended for development)
+docker run -d \
+  --name postgres-vector \
+  -e POSTGRES_PASSWORD=your_password \
+  -e POSTGRES_DB=vector_store \
+  -p 5432:5432 \
+  pgvector/pgvector:pg16
 
-# Optional - Add any additional API keys your agents need
-# EXAMPLE_API_KEY=your_api_key_here
+# Or install locally:
+# 1. Install PostgreSQL 12+
+# 2. Install pgvector extension: https://github.com/pgvector/pgvector
 ```
 
-### 4. Test the Example Agency
+### 4. Set Up Environment Variables
+
+Create a `.env` file and configure:
+
+```bash
+# OpenAI API Configuration
+OPENAI_API_KEY=your_openai_api_key_here
+
+# PostgreSQL Configuration
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_DB=vector_store
+POSTGRES_USER=your_postgres_user
+POSTGRES_PASSWORD=your_postgres_password
+
+# Model Configuration (New!)
+# Choose your model source: HuggingFace (free, local) or OpenAI (paid, API)
+MODEL_SOURCE=HuggingFace
+
+# Tokenizer Model
+# HuggingFace: sentence-transformers/all-MiniLM-L6-v2, BAAI/bge-small-en-v1.5
+# OpenAI: cl100k_base, p50k_base
+TOKENIZER_MODEL=sentence-transformers/all-MiniLM-L6-v2
+
+# Embedding Model
+# HuggingFace: sentence-transformers/all-MiniLM-L6-v2, BAAI/bge-large-en-v1.5
+# OpenAI: text-embedding-3-small, text-embedding-3-large
+EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
+
+# Chunking Configuration
+MAX_CHUNK_TOKENS=512  # Maximum tokens per chunk (default: 512)
+```
+
+> 📖 **For detailed model configuration options**, see [ENV_CONFIGURATION.md](ENV_CONFIGURATION.md)
+
+### 5. Test the Document Processing Agency
 
 ```bash
 python agency.py
 ```
 
-This runs the example agency in terminal mode for testing.
+This runs the agency in terminal mode. You can interact with it using natural language:
 
-> **💡 Pro Tip**: For creating your own agency, open this template in [Cursor IDE](https://cursor.sh/) and use the AI assistant with the `.cursor/rules/workflow.mdc` file for automated agency creation!
+**Example Commands:**
+- "Process this URL: https://docling-project.github.io/docling/"
+- "Search for information about document parsing"
+- "List all collections in the database"
+
+---
+
+## 🛠️ Agency Capabilities
+
+### DocumentProcessor Agent
+
+The DocumentProcessor agent provides three main tools:
+
+1. **CrawlAndProcessUrl**: Crawls a URL, discovers documents, parses them with Docling, chunks content, generates embeddings, and stores in PostgreSQL
+   - Supports 12+ document formats
+   - Automatic document discovery from web pages
+   - Hybrid chunking preserves document structure
+   - Configurable embedding models and chunk sizes
+
+2. **SearchSimilarChunks**: Performs semantic similarity search on stored documents
+   - Vector-based retrieval using cosine similarity
+   - Filter by collection name
+   - Configurable top-k results and similarity threshold
+   - Returns chunks with source metadata and context
+
+3. **ListCollections**: Lists all document collections with statistics
+   - Shows chunk counts per collection
+   - Displays unique source counts
+   - Provides creation/update timestamps
 
 ---
 

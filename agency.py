@@ -1,9 +1,9 @@
 from dotenv import load_dotenv
 from agency_swarm import Agency
 
-from example_agent import example_agent
-from example_agent2 import example_agent2
-
+from sage_agent import sage_agent
+from sage_oracle.sage_oracle import sage_oracle
+from document_processor import document_processor
 import asyncio
 
 load_dotenv()
@@ -11,14 +11,14 @@ load_dotenv()
 # do not remove this method, it is used in the main.py file to deploy the agency (it has to be a method)
 def create_agency(load_threads_callback=None):
     agency = Agency(
-        example_agent, example_agent2,
-        communication_flows=[(example_agent, example_agent2)],
-        name="ExampleAgency", # don't forget to rename your agency!
-        shared_instructions="shared_instructions.md",
+        sage_agent,
+        name="SageAgentAgency",
+        shared_instructions="sage_agent/instructions.md",
         load_threads_callback=load_threads_callback,
     )
 
     return agency
+
 
 if __name__ == "__main__":
     agency = create_agency()

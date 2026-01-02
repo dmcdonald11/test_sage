@@ -1,0 +1,79 @@
+# Document Processing Agency
+
+---
+
+- **Purpose:** A Model Context Protocol (MCP) server that crawls websites, extracts and parses various document formats using Docling, performs hybrid chunking, generates embeddings, and stores the results in a PostgreSQL vector database. This agency provides intelligent document processing and semantic search capabilities for RAG (Retrieval-Augmented Generation) applications.
+
+- **Communication Flows:**
+  - **Between Agents:**
+    - Single agent architecture - DocumentProcessor handles all operations
+  - **Agent to User Communication:** The DocumentProcessor agent communicates directly with users through the MCP protocol, accepting URLs for processing and search queries for retrieval.
+
+---
+
+## DocumentProcessor
+
+### **Role within the Agency**
+
+The DocumentProcessor agent is responsible for web crawling, document parsing, chunking, embedding generation, and vector storage. It provides comprehensive document processing capabilities and semantic search functionality.
+
+### Tools
+
+- **CrawlAndProcessUrl:**
+  - **Description**: Accepts a URL, crawls the page, identifies parseable documents, processes them through Docling, chunks the content using hybrid chunking, generates embeddings, and stores results in PostgreSQL with pgvector.
+  - **Inputs**:
+    - url (str) - Required: URL to crawl and process
+    - embedding_model (str) - Optional: Override default embedding model
+    - max_tokens (int) - Optional: Max tokens per chunk (default: 512)
+    - include_types (List[str]) - Optional: Filter document types to process
+    - collection_name (str) - Optional: Vector DB collection/table name
+    - metadata (dict) - Optional: Additional metadata to store with chunks
+  - **Validation**:
+    - URL must be valid and accessible
+    - max_tokens must be positive integer
+    - embedding_model must be a valid model name
+  - **Core Functions:**
+    1. Crawl URL and extract HTML content with all links and resources
+    2. Discover and classify documents (PDF, DOCX, XLSX, PPTX, MD, HTML, Images, Audio, CSV, XML, VTT, JSON)
+    3. Download and parse each document using Docling converter
+    4. Apply hybrid chunking with tokenization-aware splitting
+    5. Generate vector embeddings for each chunk
+    6. Store chunks with embeddings in PostgreSQL using pgvector
+  - **APIs**: Crawl4AI for web crawling, Docling for document parsing, sentence-transformers for embeddings, asyncpg for PostgreSQL operations
+  - **Output**: JSON object with success status, documents processed count, total chunks, embedding model used, and storage details
+
+- **SearchSimilarChunks:**
+  - **Description**: Performs vector similarity search on stored document chunks to find semantically similar content.
+  - **Inputs**:
+    - query (str) - Required: Search query text
+    - collection_name (str) - Optional: Filter by collection name
+    - top_k (int) - Optional: Number of results to return (default: 5)
+    - similarity_threshold (float) - Optional: Minimum similarity score (default: 0.7)
+    - embedding_model (str) - Optional: Model to use for query embedding
+  - **Validation**:
+    - query must not be empty
+    - top_k must be positive integer
+    - similarity_threshold must be between 0 and 1
+  - **Core Functions:**
+    1. Generate embedding for search query
+    2. Connect to PostgreSQL database
+    3. Perform cosine similarity search using pgvector
+    4. Filter by collection name if provided
+    5. Return top-k results above similarity threshold
+  - **APIs**: sentence-transformers for query embedding, asyncpg with pgvector for similarity search
+  - **Output**: JSON array of search results with chunk text, source information, headings, metadata, and similarity scores
+
+- **ListCollections:**
+  - **Description**: Lists all available collections in the vector database with chunk counts.
+  - **Inputs**: None
+  - **Validation**: None
+  - **Core Functions:**
+    1. Connect to PostgreSQL database
+    2. Query distinct collection names
+    3. Count chunks per collection
+    4. Return sorted list
+  - **APIs**: asyncpg for PostgreSQL operations
+  - **Output**: JSON array of collections with names and chunk counts
+
+---
+
