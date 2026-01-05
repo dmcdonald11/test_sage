@@ -4,6 +4,7 @@ from agency_swarm import Agency
 from sage_agent import sage_agent
 from sage_oracle.sage_oracle import sage_oracle
 from document_processor import document_processor
+from sitemap_creator import sitemap_creator
 import asyncio
 
 load_dotenv()
@@ -14,6 +15,9 @@ def create_agency(load_threads_callback=None):
         sage_agent,
         name="SageAgentAgency",
         shared_instructions="sage_agent/instructions.md",
+        communication_flows=[
+            (sage_agent, sitemap_creator),
+        ],
         load_threads_callback=load_threads_callback,
     )
 
